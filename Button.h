@@ -13,8 +13,9 @@ private:
   int pin_;
   volatile bool pressed_ = false;
   volatile bool typed_ = false;
+  long lastPress_;
 public:
-  Button(int pin) : pin_(pin) {
+  Button(int pin) : pin_(pin), lastPress_(millis()) {
   }
 
   static void begin() {
@@ -33,20 +34,33 @@ public:
     return typed_;
   }
 
-  bool consumeTyped() volatile{
-    bool t = typed_;
-    typed_ = false;
-    return t;
+  bool consumeTyped() volatile {
+    if(typed_) {
+      typed_ = false;
+      return true;
+    }
+    return false;
+  }
+  
+  bool consumePressed() volatile {
+    if(pressed_) {
+      pressed_ = false;
+      return true;
+    }
+    return false;
   }
   
   void read() volatile {
     int val = digitalRead(BUTTONPINS[pin_]); 
+    long now = millis();
+    
     if(val == LOW) {
-      pressed_ = true;
+      if(!pressed_ || lastPress_ + 1000 < now) {
+	lastPress_ = now;
+	pressed_ = true;
+      }
     } else if(pressed_) {
       typed_ = true;  
-      pressed_ = false;
-    } else {
       pressed_ = false;
     }
     //Serial.println(pressed_);

@@ -10,7 +10,7 @@
 #include "Led.h"
 #include "Button.h"
 
-bool BUTTON_VALUES[_NUM_BUTTON_CONTROLS] = {0,0,0,0};
+volatile bool BUTTON_VALUES[_NUM_BUTTON_CONTROLS] = {0,0,0,0};
 int LED_COUNTS[_NUM_BUTTON_CONTROLS] = {0,0,0,0};
 bool SETUP_MODE = false;
 
@@ -18,7 +18,7 @@ void setup() {
   Serial.begin(9600);
   Led::begin(200);
   Button::begin();
-  
+
   for(int i = 0; i < _NUM_PHOTO_CONTROLS; ++i) {
     pinMode(IRPINS[i], OUTPUT);
   }
@@ -31,16 +31,18 @@ void reactPhoto(int controlNum, int i) {
   digitalWrite(IRPINS[i], HIGH);
   delay(1);
   int highValue = analogRead(SENSORPINS[i]);
- 
+
   int analogValue = lowValue - highValue;
+  if(i == 2)
+    Serial.println(analogValue);
   
   if(analogValue < 0)
     analogValue = 0;
-  
+
   PhotoValue& pvalue = PHOTO_VALUES[i];
   pvalue.set(analogValue);
-  
-  if (pvalue.isUp()) {    
+
+  if (pvalue.isUp()) {
     Serial.println("Up!");
     pvalue.triggerUp(controlNum, i);
   } else if (pvalue.isDown()) {
@@ -50,9 +52,18 @@ void reactPhoto(int controlNum, int i) {
 }
 
 void reactButton(int controlNum, int i) {
-  if(BUTTONS[i].consumeTyped()) {
-    usbMIDI.sendControlChange(controlNum,127, 1);
-    usbMIDI.sendControlChange(controlNum, 0, 1);
+  if(BUTTONS[i].isPressed()) {
+    if(BUTTON_VALUES[i] == 0) {
+    //  usbMIDI.sendControlChange(controlNum, 127, 1);
+   //   usbMIDI.sendControlChange(controlNum, 0, 1);
+      BUTTON_VALUES[i] = 127;
+    }
+  } 
+  
+  if(BUTTONS[i].consumeTyped()){
+    if(BUTTON_VALUES[i] != 0) {
+      BUTTON_VALUES[i] = 0;
+    }
   }
 }
 
@@ -69,46 +80,45 @@ void checkSetupMode() {
     }
     
     SETUP_MODE = !SETUP_MODE;
-    BUTTONS[0].consumeTyped();
-    BUTTONS[_NUM_BUTTON_CONTROLS - 1].consumeTyped();
+    BUTTONS[0].consumePressed();
+    BUTTONS[_NUM_BUTTON_CONTROLS - 1].consumePressed();
   }
-
-  
-  if(SETUP_MODE) {
-    for(int i = 0; i < _NUM_BUTTON_CONTROLS; ++i) {
-      if(BUTTONS[i].consumeTyped()) {
-	if(PHOTO_VALUES[i].isLinear())
-	  PHOTO_VALUES[i].type = PhotoValue::TRIGGER;
-	else if(PHOTO_VALUES[i].isTrigger())
-	  PHOTO_VALUES[i].type = PhotoValue::TOGGLE;
-	else if(PHOTO_VALUES[i].isToggle())
-	  PHOTO_VALUES[i].type = PhotoValue::LINEAR;
-      }
-    }
-
-    for(int i = 0; i < _NUM_PHOTO_CONTROLS; ++i) {
-      if(PHOTO_VALUES[i].isToggle())
-	LEDS[i].on();
-      else if(PHOTO_VALUES[i].isTrigger())
-	LEDS[i].off(); 
-      else if(PHOTO_VALUES[i].isLinear())
-	LEDS[i].blink(); 
-    }
-  }  
 }
 
 void loop() { 
   ledTimer.run();
   buttonTimer.run();
   checkSetupMode();
-  
-  if(!SETUP_MODE) {
-    for(int i = 0; i < _NUM_BUTTON_CONTROLS; ++i) {
-      reactButton(_MIDI_CONTROL_OFF + _NUM_PHOTO_CONTROLS + i, i);  
-    }
 
-    for(int i = 0; i < _NUM_PHOTO_CONTROLS; ++i) {
-      reactPhoto(_MIDI_CONTROL_OFF + i, i);
+  if(!(BUTTONS[0].isPressed() && BUTTONS[_NUM_BUTTON_CONTROLS - 1].isPressed())) {
+    if(!SETUP_MODE) {
+      for(int i = 0; i < _NUM_BUTTON_CONTROLS; ++i) {
+	reactButton(_MIDI_CONTROL_OFF + _NUM_PHOTO_CONTROLS + i, i);  
+      }
+    
+      for(int i = 0; i < _NUM_PHOTO_CONTROLS; ++i) {
+	reactPhoto(_MIDI_CONTROL_OFF + i, i);
+      }
+    } else {
+      for(int i = 0; i < _NUM_BUTTON_CONTROLS; ++i) {
+	if(BUTTONS[i].consumeTyped()) {
+	  if(PHOTO_VALUES[i].isLinear())
+	    PHOTO_VALUES[i].type = PhotoValue::TRIGGER;
+	  else if(PHOTO_VALUES[i].isTrigger())
+	    PHOTO_VALUES[i].type = PhotoValue::TOGGLE;
+	  else if(PHOTO_VALUES[i].isToggle())
+	    PHOTO_VALUES[i].type = PhotoValue::LINEAR;
+	}
+      }
+
+      for(int i = 0; i < _NUM_PHOTO_CONTROLS; ++i) {
+	if(PHOTO_VALUES[i].isToggle())
+	  LEDS[i].on();
+	else if(PHOTO_VALUES[i].isTrigger())
+	  LEDS[i].off(); 
+	else if(PHOTO_VALUES[i].isLinear())
+	  LEDS[i].blink(); 
+      }
     }
   }
 }

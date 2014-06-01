@@ -31,11 +31,12 @@ void PhotoValue::calculate() {
     peak -= 5;
     bottom += 5;
   }
+  
   if (average > peak) {
-    peak += 1.0;
+    peak += 5.0;
   }
   if (average < bottom) {
-    bottom -= 1.0;
+    bottom -= 5.0;
   }
   float centre = (bottom + peak) / 2.0;
   hysteresis = abs(peak - bottom) / 2.2;
@@ -57,12 +58,13 @@ bool PhotoValue::isUp() {
    Serial.print(peak);
    Serial.print(" : ");
    Serial.println(hysteresis);*/
-  return (isLinear() || !channelState) && (average > (peak - hysteresis)) && (isLinear() || (lastTriggeredTime + 350 <= millis()));
+  return (isLinear() && average > 5) || (!isLinear() && !channelState && (average > (peak - hysteresis)) && (lastTriggeredTime + 350 <= millis()));
 }
 
 bool PhotoValue::isDown() {
-  return (isLinear() || channelState)  && average < (bottom + hysteresis);
+  return (isLinear() && !isUp()) || (channelState  && average < (bottom + hysteresis));
 }
+
 
 void PhotoValue::triggerUp(int controlNum, int i) {
   lastTriggeredValue = average;
