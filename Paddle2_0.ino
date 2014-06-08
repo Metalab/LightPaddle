@@ -54,14 +54,14 @@ void reactPhoto(int controlNum, int i) {
 void reactButton(int controlNum, int i) {
   if(BUTTONS[i].isPressed()) {
     if(BUTTON_VALUES[i] == 0) {
-    //  usbMIDI.sendControlChange(controlNum, 127, 1);
-   //   usbMIDI.sendControlChange(controlNum, 0, 1);
+      usbMIDI.sendControlChange(controlNum, 127, 1);
       BUTTON_VALUES[i] = 127;
     }
   } 
   
   if(BUTTONS[i].consumeTyped()){
     if(BUTTON_VALUES[i] != 0) {
+      usbMIDI.sendControlChange(controlNum, 0, 1);
       BUTTON_VALUES[i] = 0;
     }
   }

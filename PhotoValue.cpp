@@ -76,7 +76,7 @@ void PhotoValue::triggerUp(int controlNum, int i) {
   if(isToggle()) {
     controlVal = lastControlVal ? 0 : 127;
   } else if(isLinear()) {
-    controlVal = average / 2;
+    controlVal = average;
     if(controlVal > 127)
       controlVal = 127;
   }

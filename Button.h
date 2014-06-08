@@ -11,11 +11,11 @@ static SimpleTimer buttonTimer;
 struct Button {
 private:
   int pin_;
-  volatile bool pressed_ = false;
-  volatile bool typed_ = false;
+  volatile bool pressed_;
+  volatile bool typed_;
   long lastPress_;
 public:
-  Button(int pin) : pin_(pin), lastPress_(millis()) {
+  Button(int pin) : pin_(pin), pressed_(false), typed_(false), lastPress_(millis()) {
   }
 
   static void begin() {
