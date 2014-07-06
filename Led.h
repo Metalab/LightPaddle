@@ -12,10 +12,10 @@ static SimpleTimer ledTimer;
 class Led {
 private:
   int pin_;
-  volatile bool blink_ = false;
-  volatile bool state_ = true;
+  volatile bool blink_;
+  volatile bool state_;
 public:
-  Led(int pin) : pin_(pin) {
+  Led(int pin) : pin_(pin), blink_(false), state_(true) {
   }
   
   static void begin(int timeout) {  
