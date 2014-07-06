@@ -10,6 +10,10 @@
 #include "Led.h"
 #include "Button.h"
 
+
+#include <Arduino.h>
+#include <MIDI.h>
+
 volatile bool BUTTON_VALUES[_NUM_BUTTON_CONTROLS] = {0,0};
 int LED_COUNTS[_NUM_PHOTO_CONTROLS] = {0,0,0,0};
 bool SETUP_MODE = false;
@@ -23,6 +27,9 @@ void setup() {
     pinMode(IRPINS[i], OUTPUT);
     LEDS[i].blink();
   }
+  MIDI.begin();
+
+  Serial.println("Hello Paddle");
 }
 
 void reactPhoto(int controlNum, int i) {
@@ -34,8 +41,7 @@ void reactPhoto(int controlNum, int i) {
   int highValue = analogRead(SENSORPINS[i]);
 
   int analogValue = lowValue - highValue;
-  if(i == 2)
-    Serial.println(analogValue);
+  //  if (i == 2) Serial.println(analogValue);
   
   if(analogValue < 0)
     analogValue = 0;
@@ -56,6 +62,7 @@ void reactButton(int controlNum, int i) {
   if(BUTTONS[i].isPressed()) {
     if(BUTTON_VALUES[i] == 0) {
       usbMIDI.sendControlChange(controlNum, 127, 1);
+      MIDI.sendControlChange(controlNum, 127, 1);
       BUTTON_VALUES[i] = 127;
     }
   } 
@@ -63,6 +70,7 @@ void reactButton(int controlNum, int i) {
   if(BUTTONS[i].consumeTyped()){
     if(BUTTON_VALUES[i] != 0) {
       usbMIDI.sendControlChange(controlNum, 0, 1);
+      MIDI.sendControlChange(controlNum, 0, 1);
       BUTTON_VALUES[i] = 0;
     }
   }
