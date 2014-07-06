@@ -10,8 +10,8 @@
 #include "Led.h"
 #include "Button.h"
 
-volatile bool BUTTON_VALUES[_NUM_BUTTON_CONTROLS] = {0,0,0,0};
-int LED_COUNTS[_NUM_BUTTON_CONTROLS] = {0,0,0,0};
+volatile bool BUTTON_VALUES[_NUM_BUTTON_CONTROLS] = {0,0};
+int LED_COUNTS[_NUM_PHOTO_CONTROLS] = {0,0,0,0};
 bool SETUP_MODE = false;
 
 void setup() {
@@ -21,6 +21,7 @@ void setup() {
 
   for(int i = 0; i < _NUM_PHOTO_CONTROLS; ++i) {
     pinMode(IRPINS[i], OUTPUT);
+    LEDS[i].blink();
   }
 }
 
