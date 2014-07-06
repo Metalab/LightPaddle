@@ -51,7 +51,7 @@ public:
   }
   
   void read() volatile {
-    int val = digitalRead(BUTTONPINS[pin_]); 
+    int val = digitalRead(pin_); 
     long now = millis();
     
     if(val == LOW) {
